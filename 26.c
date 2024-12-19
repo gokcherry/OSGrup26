@@ -37,33 +37,42 @@ int main() {
 
 // Komut çalıştırma fonksiyonu
 void komut_calistir(char *komut) {
-    char *argumanlar[MAX_ARGUMAN]; // Komutun argümanlarının saklanacağı dizi
+    char *argumanlar[MAX_ARGUMAN];
+    char *giris_dosyasi = NULL;                    // Giriş dosyası adı için değişken
     int i = 0;
 
-    // Komut boşluklara göre parçalanır
+
+
+    // Komut ve argümanları parçalar
     char *parca = strtok(komut, " ");
     while (parca != NULL) {
-        argumanlar[i++] = parca; // Her parça argüman dizisine eklenir.
-        parca = strtok(NULL, " "); // Bir sonraki parçaya geçilir.
+        if (strcmp(parca, "<") == 0) {
+            giris_dosyasi = strtok(NULL, " ");     // "<" operatöründen sonra gelen dosya adını alır
+        } else {
+            argumanlar[i++] = parca;              // Argümanları diziye ekler
+        }
+        parca = strtok(NULL, " ");
     }
-    argumanlar[i] = NULL; // Argüman dizisi null ile sonlandırılır.
+    argumanlar[i] = NULL;                         // Argüman dizisini sonlandırır
 
-    // Eğer komut boş ise fonksiyon sonlanır.
-    if (argumanlar[0] == NULL) return;
-
-    // Yeni bir süreç (child process) oluşturulur.
-    pid_t pid = fork();
-    if (pid == 0) {
-        // Çocuk süreçte komut çalıştırılır.
-        execvp(argumanlar[0], argumanlar);
-        // Komut çalıştırılamazsa hata mesajı yazdırılır.
-        perror("Komut çalıştırılamadı");
-        exit(1); // Çocuk süreç hata ile sonlanır.
-    } else if (pid > 0) {
-        // Ana süreç, çocuk sürecin tamamlanmasını bekler.
-        waitpid(pid, NULL, 0);
-    } else {
-        // fork() başarısız olursa hata mesajı yazdırılır.
-        perror("Fork hatası");
+    if (giris_dosyasi) {
+        pid_t pid = fork();                       // Yeni bir işlem oluşturur
+        if (pid == 0) {                              // Çocuk işlem için
+            int fd = open(giris_dosyasi, O_RDONLY);    // Giriş dosyasını okuma modunda açar
+            if (fd < 0) {                                 
+                perror("Giriş dosyası bulunamadı");
+                exit(1);
+            }
+            dup2(fd, STDIN_FILENO);            // Giriş dosyasını standart girdiyle değiştirir
+            close(fd);
+            execvp(argumanlar[0], argumanlar);        // Komutu çalıştırır
+            perror("Komut çalıştırılamadı");
+            exit(1);
+        } else if (pid > 0) {                      // Ebeveyn işlem için
+            waitpid(pid, NULL, 0);                   // Çocuk işlemin tamamlanmasını bekler
+        } else {
+            perror("Fork hatası");
+        }
     }
+}
 }
