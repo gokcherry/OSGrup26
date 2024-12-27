@@ -1,18 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
-
-// Tanımlar
-#define MAX_KOMUT_UZUNLUK 1024  // Maksimum komut uzunluğu
-#define MAX_ARGUMAN 100         // Maksimum argüman sayısı
-
-// Çocuk işlemler için sinyal işleyici
-void sinyal_isleyici(int sinyal) {
+#include "grup26.h"
+void sinyal_isleyici() {
     int durum;
     pid_t pid;
 
